@@ -38,7 +38,7 @@ def get_pdf_files(service, folder_id):
 
 # Streamlit UI 구성
 st.title("📄 PDF 기반 AI 챗봇")
-st.write("Google Drive의 PDF 내용을 학습한 AI 챗봇입니다.")
+st.write("Google Drive의 모든 PDF 문서를 분석하여 답변하는 AI 챗봇입니다.")
 
 try:
     # 드라이브 서비스 초기화
@@ -51,73 +51,89 @@ try:
     if not pdf_files:
         st.warning("폴더에 PDF 파일이 없습니다.")
     else:
-        # 파일 선택
-        selected_file = st.selectbox(
-            "분석할 PDF 파일을 선택하세요:",
-            options=[file['name'] for file in pdf_files]
-        )
+        st.info(f"총 {len(pdf_files)}개의 PDF 파일을 분석합니다.")
         
-        if selected_file:
-            file_id = next(file['id'] for file in pdf_files if file['name'] == selected_file)
+        # 모든 PDF 파일의 내용을 하나로 합치기
+        @st.cache_resource
+        def process_all_pdfs():
+            all_texts = []
+            for pdf in pdf_files:
+                try:
+                    # PDF 파일 다운로드
+                    request = service.files().get_media(fileId=pdf['id'])
+                    file_content = request.execute()
+                    
+                    # 임시 파일로 저장
+                    with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as temp_file:
+                        temp_file.write(file_content)
+                        pdf_path = temp_file.name
+                    
+                    # PDF 로드 및 처리
+                    loader = PyPDFLoader(pdf_path)
+                    documents = loader.load()
+                    
+                    # 파일 이름을 메타데이터에 추가
+                    for doc in documents:
+                        doc.metadata['source'] = pdf['name']
+                    
+                    all_texts.extend(documents)
+                    
+                    # 임시 파일 삭제
+                    os.unlink(pdf_path)
+                    
+                except Exception as e:
+                    st.warning(f"{pdf['name']} 처리 중 오류 발생: {str(e)}")
             
-            # PDF 파일 다운로드 및 처리
-            request = service.files().get_media(fileId=file_id)
-            file_content = request.execute()
-            
-            # 임시 파일로 저장
-            with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as temp_file:
-                temp_file.write(file_content)
-                pdf_path = temp_file.name
-            
-            # PDF 로드 및 처리
-            loader = PyPDFLoader(pdf_path)
-            documents = loader.load()
+            # 문서 분할
             text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=0)
-            texts = text_splitter.split_documents(documents)
+            split_texts = text_splitter.split_documents(all_texts)
             
             # 벡터 저장소 생성
             embeddings = OpenAIEmbeddings()
-            vector_store = FAISS.from_documents(texts, embeddings)
-            retriever = vector_store.as_retriever(search_kwargs={"k": 2})
+            vector_store = FAISS.from_documents(split_texts, embeddings)
             
-            # 프롬프트 설정
-            system_template = """
-            Use the following pieces of context to answer the users question shortly.
-            Given the following summaries of a long document and a question.
-            If you don't know the answer, just say that "I don't know", don't try to make up an answer.
-            ----------------
-            {summaries}
-            You MUST answer in Korean and in Markdown format:
-            """
-            messages = [
-                SystemMessagePromptTemplate.from_template(system_template),
-                HumanMessagePromptTemplate.from_template("{question}")
-            ]
-            prompt = ChatPromptTemplate.from_messages(messages)
-            chain_type_kwargs = {"prompt": prompt}
-            
-            # LLM 모델 설정
-            llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0)
-            
-            # QA 체인 설정
-            chain = RetrievalQAWithSourcesChain.from_chain_type(
-                llm=llm,
-                chain_type="stuff",
-                retriever=retriever,
-                return_source_documents=True,
-                chain_type_kwargs=chain_type_kwargs
-            )
-            
-            # 사용자 질문 입력
-            query = st.text_input("질문을 입력하세요:")
-            if st.button("질문하기") and query:
-                with st.spinner("답변 생성 중..."):
-                    result = chain({"question": query}, return_only_outputs=True)
-                    answer = result["answer"]
-                    st.markdown(answer)
-            
-            # 임시 파일 삭제
-            os.unlink(pdf_path)
+            return vector_store
+        
+        # 모든 PDF 처리
+        vector_store = process_all_pdfs()
+        retriever = vector_store.as_retriever(search_kwargs={"k": 2})
+        
+        # 프롬프트 설정
+        system_template = """
+        Use the following pieces of context to answer the users question shortly.
+        Given the following summaries of a long document and a question.
+        If you don't know the answer, just say that "I don't know", don't try to make up an answer.
+        If possible, mention which document (source) the information comes from.
+        ----------------
+        {summaries}
+        You MUST answer in Korean and in Markdown format:
+        """
+        messages = [
+            SystemMessagePromptTemplate.from_template(system_template),
+            HumanMessagePromptTemplate.from_template("{question}")
+        ]
+        prompt = ChatPromptTemplate.from_messages(messages)
+        chain_type_kwargs = {"prompt": prompt}
+        
+        # LLM 모델 설정
+        llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0)
+        
+        # QA 체인 설정
+        chain = RetrievalQAWithSourcesChain.from_chain_type(
+            llm=llm,
+            chain_type="stuff",
+            retriever=retriever,
+            return_source_documents=True,
+            chain_type_kwargs=chain_type_kwargs
+        )
+        
+        # 사용자 질문 입력
+        query = st.text_input("질문을 입력하세요:")
+        if st.button("질문하기") and query:
+            with st.spinner("답변 생성 중..."):
+                result = chain({"question": query}, return_only_outputs=True)
+                answer = result["answer"]
+                st.markdown(answer)
 
 except Exception as e:
     st.error(f"오류가 발생했습니다: {str(e)}")
