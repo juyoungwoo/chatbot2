@@ -134,6 +134,8 @@ try:
             temperature=0,
             groq_api_key=os.environ["GROQ_API_KEY"],
             max_tokens=512
+            verify_ssl=True,
+            base_url="https://api.groq.com/v1"
         )
         
         # QA 체인 설정
