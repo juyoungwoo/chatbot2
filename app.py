@@ -87,7 +87,7 @@ try:
            
            # 문서 분할 최적화
            text_splitter = CharacterTextSplitter(
-               chunk_size=1000,  # 청크 사이즈 증가
+               chunk_size=2000,  # 청크 사이즈 증가
                chunk_overlap=200,  # 오버랩 추가
                separator="\n"  # 줄바꿈 기준으로 분할
            )
@@ -101,7 +101,7 @@ try:
        
        # 모든 PDF 처리
        vector_store = process_all_pdfs()
-       retriever = vector_store.as_retriever(search_kwargs={"k": 1})  # k 값 감소
+       retriever = vector_store.as_retriever(search_kwargs={"k": 3})  # k 값 감소
        
        # 프롬프트 설정
        system_template = """
