@@ -87,7 +87,7 @@ try:
 
            # 문서 분할 최적화
            text_splitter = CharacterTextSplitter(
-               chunk_size=2000,  
+               chunk_size=500,  
                chunk_overlap=200,  # 오버랩 추가
                separator="\n"  # 줄바꿈 기준으로 분할
            )
