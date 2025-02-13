@@ -9,3 +9,5 @@ tiktoken
 google-auth-oauthlib
 google-auth-httplib2
 google-api-python-client
+requests>=2.31.0
+urllib3>=2.0.0
