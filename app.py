@@ -1,9 +1,9 @@
 import streamlit as st
 import os
 import io
-from langchain_community.chat_models import ChatOpenAI
+from langchain_groq import ChatGroq
 from langchain_community.document_loaders import PyPDFLoader
-from langchain_community.embeddings import OpenAIEmbeddings
+from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain.text_splitter import CharacterTextSplitter
 from langchain_community.vectorstores import FAISS
 from langchain.chains import RetrievalQAWithSourcesChain
@@ -16,8 +16,8 @@ from google.oauth2 import service_account
 from googleapiclient.discovery import build
 import tempfile
 
-# OpenAI API 키 설정
-os.environ["OPENAI_API_KEY"] = st.secrets["OPENAI_API_KEY"]
+# Groq API 키 설정
+os.environ["GROQ_API_KEY"] = st.secrets["GROQ_API_KEY"]
 
 # Google Drive 설정
 @st.cache_resource
@@ -38,7 +38,7 @@ def get_pdf_files(service, folder_id):
 
 # Streamlit UI 구성
 st.title("📄 IPR실 매뉴얼 AI 챗봇")
-st.write("추가적인 자료 업데이트 희망시 주영 연구원 요청")
+st.write("☆ 자료 수정 또는 추가 희망시 주영 연구원 연락 ☆")
 
 try:
     # 드라이브 서비스 초기화
@@ -88,8 +88,10 @@ try:
             text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=0)
             split_texts = text_splitter.split_documents(all_texts)
             
-            # 벡터 저장소 생성
-            embeddings = OpenAIEmbeddings()
+            # HuggingFace 임베딩 및 벡터 저장소 생성
+            embeddings = HuggingFaceEmbeddings(
+                model_name="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+            )
             vector_store = FAISS.from_documents(split_texts, embeddings)
             
             return vector_store
@@ -115,8 +117,12 @@ try:
         prompt = ChatPromptTemplate.from_messages(messages)
         chain_type_kwargs = {"prompt": prompt}
         
-        # LLM 모델 설정
-        llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0)
+        # Groq LLM 모델 설정
+        llm = ChatGroq(
+            model_name="llama2-70b-4096",  # 가장 가벼운 Llama2 모델
+            temperature=0,
+            groq_api_key=os.environ["GROQ_API_KEY"]
+        )
         
         # QA 체인 설정
         chain = RetrievalQAWithSourcesChain.from_chain_type(
