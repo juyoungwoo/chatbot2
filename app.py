@@ -5,7 +5,7 @@ from langchain_community.chat_models import ChatOpenAI
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_community.embeddings import OpenAIEmbeddings
 from langchain.text_splitter import CharacterTextSplitter
-from langchain_community.vectorstores import Chroma
+from langchain_community.vectorstores import FAISS
 from langchain.chains import RetrievalQAWithSourcesChain
 from langchain.prompts.chat import (
     ChatPromptTemplate,
@@ -77,7 +77,7 @@ try:
             
             # 벡터 저장소 생성
             embeddings = OpenAIEmbeddings()
-            vector_store = Chroma.from_documents(texts, embeddings)
+            vector_store = FAISS.from_documents(texts, embeddings)
             retriever = vector_store.as_retriever(search_kwargs={"k": 2})
             
             # 프롬프트 설정
