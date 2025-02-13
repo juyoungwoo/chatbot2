@@ -122,7 +122,7 @@ try:
        
        # Groq LLM 모델 설정 최적화
        llm = ChatGroq(
-           model_name="llama2-70b-4096",
+           model_name="llama-3.1-8b-instant",
            temperature=0,
            groq_api_key=os.environ["GROQ_API_KEY"],
            max_tokens=512  # 응답 길이 제한
