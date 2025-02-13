@@ -101,7 +101,7 @@ try:
        
        # 모든 PDF 처리
        vector_store = process_all_pdfs()
-       retriever = vector_store.as_retriever(search_kwargs={"k": 3})  # k 값 감소
+       retriever = vector_store.as_retriever(search_kwargs={"k": 2})  # k 값 감소
        
        # 프롬프트 설정
        system_template = """
