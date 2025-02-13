@@ -1,7 +1,7 @@
 streamlit
 langchain
-langchain-community
-langchain-groq
+langchain-community>=0.0.10
+langchain-groq>=0.2.4
 sentence-transformers
 faiss-cpu
 pypdf
