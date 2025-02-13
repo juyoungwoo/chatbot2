@@ -1,7 +1,7 @@
 streamlit
 langchain
-langchain-community>=0.0.10
-langchain-groq>=0.2.4
+langchain-community
+langchain-groq
 sentence-transformers
 faiss-cpu
 pypdf
@@ -9,5 +9,3 @@ tiktoken
 google-auth-oauthlib
 google-auth-httplib2
 google-api-python-client
-requests>=2.31.0
-urllib3>=2.0.0
