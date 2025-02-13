@@ -133,7 +133,7 @@ try:
             model_name="llama-3.1-8b-instant",
             temperature=0,
             groq_api_key=os.environ["GROQ_API_KEY"],
-            max_tokens=512
+            max_tokens=512,
             verify_ssl=True,
             base_url="https://api.groq.com/v1"
         )
