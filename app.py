@@ -37,8 +37,8 @@ def get_pdf_files(service, folder_id):
     return results.get('files', [])
 
 # Streamlit UI 구성
-st.title("📄 PDF 기반 AI 챗봇")
-st.write("Google Drive의 모든 PDF 문서를 분석하여 답변하는 AI 챗봇입니다.")
+st.title("📄 IPR실 매뉴얼 AI 챗봇")
+st.write("추가적인 자료 업데이트 희망시 주영 연구원 요청")
 
 try:
     # 드라이브 서비스 초기화
