@@ -43,7 +43,7 @@ st.write("Google Drive의 PDF 내용을 학습한 AI 챗봇입니다.")
 try:
     # 드라이브 서비스 초기화
     service = init_drive_service()
-    FOLDER_ID = '1fThzSsDTeZA6Zs1VLGNPp6PejJJVydra'  # 여기에 실제 폴더 ID
+    FOLDER_ID = '1fThzSsDTeZA6Zs1VLGNPp6PejJJVydra'  # 구글 드라이브 폴더 ID
     
     # PDF 파일 목록 가져오기
     pdf_files = get_pdf_files(service, FOLDER_ID)
@@ -69,7 +69,7 @@ try:
                 temp_file.write(file_content)
                 pdf_path = temp_file.name
             
-            # PDF 로드 및 처리 (기존 코드와 동일)
+            # PDF 로드 및 처리
             loader = PyPDFLoader(pdf_path)
             documents = loader.load()
             text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=0)
@@ -80,7 +80,7 @@ try:
             vector_store = Chroma.from_documents(texts, embeddings)
             retriever = vector_store.as_retriever(search_kwargs={"k": 2})
             
-            # 프롬프트 설정 (기존 코드와 동일)
+            # 프롬프트 설정
             system_template = """
             Use the following pieces of context to answer the users question shortly.
             Given the following summaries of a long document and a question.
