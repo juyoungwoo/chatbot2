@@ -2,9 +2,10 @@ streamlit
 langchain
 langchain-community
 openai
-chromadb
+chromadb==0.3.29
 pypdf
 tiktoken
 google-auth-oauthlib
 google-auth-httplib2
 google-api-python-client
+sqlite3
